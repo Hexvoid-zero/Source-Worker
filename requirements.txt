@@ -1,0 +1,6 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+httpx>=0.27
+pydantic>=2.7
+pywebview>=5.0       # embedded native window (falls back to Edge --app / browser)
+pythonnet>=3.0       # WebView2 backend on Windows
