@@ -24,6 +24,8 @@
     <div class="main">
       <aside class="sidebar">
         <button class="new-btn" id="newJob">＋ New job</button>
+        <button class="sidebar-tab-btn" id="btnWorkspace">🏢 Workspace</button>
+        <button class="sidebar-tab-btn" id="btnCoder">🧑‍💻 Source Work Coder</button>
 
         <div class="side-section jobs">
           <div class="side-head">Jobs</div>
@@ -50,7 +52,13 @@
              best-suited model, works through them, and assembles one finished deliverable.</p>
           <div class="goal-box">
             <textarea id="goal" rows="3" placeholder="e.g. Research the top 5 open-source vector databases and write a comparison report with a recommendation."></textarea>
-            <button id="run">Start work →</button>
+            <div class="goal-controls" style="display:flex;align-items:center;gap:10px;align-self:flex-end">
+              <span style="font-size:12px;color:var(--muted)">Planner Model:</span>
+              <select id="planModelSelect" class="select-premium" style="padding:6px 10px;border-radius:6px;background:var(--panel);border:1px solid var(--edge);font-size:12.5px;color:var(--text);outline:none">
+                <!-- populated dynamically -->
+              </select>
+              <button id="run">Start work →</button>
+            </div>
           </div>
           <div class="examples" id="examples">
             <button>Write a one-page market brief on AI coding agents, saved as a report.</button>
@@ -75,6 +83,167 @@
             <div class="final-body assistant" id="finalBody"></div>
           </div>
         </div>
+
+        <!-- workspace (virtual office) -->
+        <div class="workspace-view" id="workspaceView" hidden>
+          <div class="workspace-header">
+            <div class="workspace-title-area">
+              <h2>🏢 Hired Agent Workspace</h2>
+              <p class="subtitle">Assign goals to individual agents or coordinate a collaborative multi-agent pipeline</p>
+            </div>
+            <div class="workspace-meta" style="display:flex;align-items:center;gap:6px">
+              <span class="path-badge" id="wsPath">.../workspaces/virtual_office</span>
+              <button id="btnEditPath" class="link" style="font-size:11px">Change</button>
+              <div id="pathEditForm" style="display:none;align-items:center;gap:6px">
+                <input id="wsPathInput" style="background:var(--panel2);border:1px solid var(--edge);border-radius:6px;padding:3px 6px;font-size:11px;font-family:monospace;width:260px" placeholder="Absolute folder path" />
+                <button id="btnSavePath" class="primary-btn" style="padding:3px 8px;font-size:10px">Save</button>
+                <button id="btnCancelPath" style="font-size:11px;color:var(--muted);background:none;border:none">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="workspace-layout">
+            <!-- Left Panel: HR Portal -->
+            <div class="workspace-panel hr-panel">
+              <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
+                <span>👥 HR Portal — Hire Talent</span>
+                <button id="btnCustomAgent" style="font-size:10.5px;color:var(--accent);font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid var(--accent);cursor:pointer">＋ Custom</button>
+              </div>
+              <div class="agent-cards" id="availableAgents">
+                <!-- populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Right Panel: Virtual Office Floor + Task Center + File Explorer -->
+            <div class="workspace-panel main-panel">
+              <div class="panel-header">🖥️ Virtual Office Floor</div>
+              
+              <!-- The Visual Grid of Desks -->
+              <div class="office-floor-wrapper">
+                <div class="office-floor" id="officeFloor">
+                  <!-- populated dynamically with hired agents desks -->
+                </div>
+              </div>
+
+              <!-- Task Assignment Panel -->
+              <div class="task-center">
+                <div class="task-center-header">🎯 Task Control Center</div>
+                <div class="task-input-row">
+                  <textarea id="agentTaskInput" placeholder="Assign a task to the agents (e.g. Build an interactive HTML table for sales data)"></textarea>
+                </div>
+                <div class="task-controls">
+                  <div class="assignee-select">
+                    <label>Assign to:</label>
+                    <select id="agentAssigneeSelect" class="select-premium">
+                      <option value="all">Entire Team (Collaborative Handoff)</option>
+                    </select>
+                  </div>
+                  <button id="btnAssignTask" class="primary-btn">Assign Task →</button>
+                </div>
+              </div>
+
+              <!-- File Explorer + Output Console Split -->
+              <div class="bottom-split">
+                <!-- File Explorer -->
+                <div class="file-explorer">
+                  <div class="sub-header">📁 Workspace Files</div>
+                  <div class="file-grid" id="wsFileGrid">
+                    <!-- files listed dynamically -->
+                  </div>
+                </div>
+
+                <!-- Global Output Console -->
+                <div class="console-panel">
+                  <div class="sub-header">📟 Global Console Log</div>
+                  <div class="console-logs" id="globalConsoleLogs">
+                    <div class="log-line system">Office system ready. Hire agents and assign tasks.</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Source Work Coder — Claude Code-style coding environment -->
+        <div class="coder-view" id="coderView" hidden>
+          <nav class="coder-rail">
+            <button class="cr-item active" id="crNew"><span class="cr-ic">✎</span> New session</button>
+            <button class="cr-item" id="crMemory"><span class="cr-ic">🧠</span> Memory</button>
+            <button class="cr-item" data-coder="routines"><span class="cr-ic">🔁</span> Routines</button>
+            <button class="cr-item" data-coder="dispatch"><span class="cr-ic">📡</span> Dispatch <span class="cr-beta">Beta</span></button>
+            <button class="cr-item" data-coder="customize"><span class="cr-ic">⚙</span> Customize</button>
+            <button class="cr-item" data-coder="more"><span class="cr-ic">⋯</span> More</button>
+            <div class="cr-divider"></div>
+            <div class="cr-recents-head">Recents</div>
+            <div class="cr-recents" id="coderRecents"></div>
+          </nav>
+
+          <div class="coder-main">
+            <div class="coder-center" id="coderComposerPanel">
+              <div class="coder-chat-history" id="coderChatHistory" hidden></div>
+              <div class="coder-greeting" id="coderGreeting">
+                <span class="coder-spark">✦</span>
+                <h1>What's up next, <span id="coderUser">Evgeni</span>?</h1>
+              </div>
+
+              <div class="coder-composer">
+                <textarea id="coderInput" rows="3" placeholder="Describe a task or ask a question"></textarea>
+                
+                <!-- Coder Attachments tag list -->
+                <div class="coder-attachments" id="coderAttachments" style="display:none; flex-wrap:wrap; gap:6px; margin-top:2px; margin-bottom:4px; padding:4px 0;"></div>
+
+                <div class="coder-composer-foot">
+                  <div class="ccf-left">
+                    <button class="ccf-chip" id="coderRepoBtn" title="Choose the folder Source Work Coder runs in">
+                      <span class="ccf-ic">⎇</span>
+                      <span id="coderRepoLabel">Default</span>
+                      <span class="ccf-sub">Select repo…</span>
+                    </button>
+                    <div class="ccf-repo-edit" id="coderRepoEdit" hidden>
+                      <input id="coderRepoInput" placeholder="Absolute folder path (blank = default)" />
+                      <button id="coderRepoSave" title="Set">Set</button>
+                      <button id="coderRepoCancel" title="Cancel">✕</button>
+                    </div>
+                    
+                    <button class="ccf-chip" id="btnCoderAttach" title="Attach files to chat" style="margin-left: 8px;">
+                      <span class="ccf-ic">📎</span>
+                      <span>Attach...</span>
+                    </button>
+                    <input type="file" id="coderFileInput" multiple style="display:none" />
+
+                    <button class="ccf-chip" id="btnCoderAttachFolder" title="Attach folder to chat" style="margin-left: 8px;">
+                      <span class="ccf-ic">📁</span>
+                      <span>Attach Folder...</span>
+                    </button>
+                    <input type="file" id="coderFolderInput" webkitdirectory directory multiple style="display:none" />
+                  </div>
+                  <div class="ccf-right">
+                    <select id="coderModelSelect" class="ccf-model" title="Execution model"></select>
+                    <button class="ccf-send" id="coderSend" title="Send (Ctrl+Enter)">↑</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="coder-suggest" id="coderSuggest">
+                <button>Refactor a Python module and add unit tests</button>
+                <button>Build a small web component from a spec</button>
+                <button>Audit a file for security issues and fix them</button>
+              </div>
+            </div>
+
+            <!-- Coder Memory panel -->
+            <div class="coder-center" id="coderMemoryPanel" style="display:none; max-width:800px; width:100%; margin: 0 auto; padding: 20px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 1px solid var(--edge); padding-bottom: 10px; width:100%;">
+                <h2 style="margin:0; font-size: 20px; font-weight:600; color:var(--text-bright)">Saved Codebase Memories</h2>
+                <button id="btnClearCoderMemory" style="background:var(--red-dim, #f8514933); color:var(--red, #ff7b72); border:1px solid var(--red-edge, #f8514966); border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-weight:500;">Clear Memory</button>
+              </div>
+              <div id="coderMemoryList" style="display:flex; flex-direction:column; gap:10px; max-height: 450px; overflow-y: auto; padding-right: 8px; width:100%;">
+                <!-- Memories render here -->
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </div>
@@ -93,6 +262,63 @@
         <span class="spacer"></span>
         <button id="connCancel">Cancel</button>
         <button id="connSave" class="primary">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="codeModal" hidden>
+    <div class="modal-card code-modal-card">
+      <div class="modal-head" style="display:flex;justify-content:space-between;align-items:center">
+        <span id="codeModalTitle">File Name</span>
+        <button id="codeModalClose" style="font-size:16px;color:var(--muted);background:none;border:none;cursor:pointer">✕</button>
+      </div>
+      <div class="modal-body" style="padding:0;overflow:hidden;height:450px">
+        <pre class="code-view-pre" style="margin:0;padding:15px;height:100%;overflow:auto;background:#0d1117;color:#c9d1d9;font-family:monospace;font-size:12px;line-height:1.5"><code id="codeModalBody"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="customAgentModal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">Create Custom Agent</div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:10px;margin-bottom:8px">
+          <div>
+            <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Avatar</label>
+            <input id="cAgentAvatar" placeholder="🧙" style="font-size:20px;text-align:center;width:100%" value="🤖" />
+          </div>
+          <div>
+            <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Name</label>
+            <input id="cAgentName" placeholder="e.g. Emma QA" style="width:100%" />
+          </div>
+        </div>
+        
+        <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Role</label>
+        <input id="cAgentRole" placeholder="e.g. Quality Assurance" style="margin-bottom:8px;width:100%" />
+        
+        <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Specialties (comma-separated)</label>
+        <input id="cAgentSpecialties" placeholder="e.g. Selenium testing, Bug logging, CSS checks" style="margin-bottom:8px;width:100%" />
+        
+        <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Description</label>
+        <input id="cAgentDesc" placeholder="e.g. Audits visual designs and runs automated tests." style="margin-bottom:8px;width:100%" />
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Execution Model</label>
+            <select id="cAgentModel" class="select-premium" style="background:var(--panel2);border:1px solid var(--edge);border-radius:7px;padding:8px 10px;font-size:13px;width:100%;color:var(--text);outline:none">
+              <!-- populated dynamically -->
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px;text-transform:uppercase;color:var(--muted)">Hourly Cost</label>
+            <input id="cAgentCost" type="number" value="120" style="width:100%" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <span class="spacer"></span>
+        <button id="cAgentCancel" style="cursor:pointer">Cancel</button>
+        <button id="cAgentSave" class="primary" style="cursor:pointer">Create Agent</button>
       </div>
     </div>
   </div>

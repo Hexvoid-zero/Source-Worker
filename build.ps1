@@ -8,7 +8,8 @@ if (-not (Test-Path .venv-build)) { python -m venv .venv-build }
 
 Write-Host "2/2  Packaging exe (onedir = fast startup)…"
 Remove-Item -Recurse -Force build, dist, SourceWorker.spec -ErrorAction SilentlyContinue
-.\.venv-build\Scripts\python.exe -m PyInstaller --noconfirm --onedir --windowed --name SourceWorker `
+.\.venv-build\Scripts\python.exe -m PyInstaller --noconfirm --onedir --windowed --optimize 2 --name SourceWorker `
+  --icon SourceWorker.ico `
   --add-data "static;static" --collect-submodules uvicorn `
   --collect-all webview --collect-all clr_loader --collect-all pythonnet --hidden-import clr `
   --paths backend backend\launcher.py
