@@ -25,7 +25,7 @@
 html, body { height: 100%; overflow: hidden; }
 body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 13.5px; color: var(--text); background: var(--bg); }
 button { font-family: inherit; color: inherit; background: none; border: none; cursor: pointer; transition: .15s; }
-textarea, input, select { font-family: inherit; color: inherit; background: none; border: none; outline: none; }
+textarea, input, select { font-family: inherit; color: inherit; background: none; border: none; outline: none; user-select: text !important; -webkit-user-select: text !important; -ms-user-select: text !important; }
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: #272d36; border-radius: 5px; }
 

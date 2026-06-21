@@ -65,7 +65,8 @@ def main():
 
         window = webview.create_window(
             "Source Worker", html=_SPLASH,
-            width=1320, height=880, min_size=(980, 640)
+            width=1320, height=880, min_size=(980, 640),
+            text_select=True
         )
 
         def _on_gui_ready():

@@ -45,6 +45,15 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 
 Opens as a native app window (embedded WebView2, falling back to Edge/Chrome `--app` — no browser chrome).
 
+## Recent Updates & Enhancements
+
+- **Failed Task Visualization**: Added custom status rules (`.ti-failed`) to highlight failed subtasks in the planning/execution graph in red for immediate visual diagnostics.
+- **Build Optimization & Custom Icon**: Enhanced the PyInstaller `build.ps1` packaging configuration to compile with `--optimize 2` and embed the custom `SourceWorker.ico` branding icon.
+- **Virtual Office & Source Agent Integration**: Integrated digital workers with the local Source Agent (`Source 1.0`). If a task routes to the Source Agent, the worker automatically starts the agent's backend, syncs the workspace path, and streams tool executions and thinking steps.
+- **Interactive Coder Agent & Memory**: Added an `is_coder` mode for jobs with a persistent coding memory store (`coder_memory.json`). Users can post follow-up developer instructions directly to active jobs, dynamically queuing new coding tasks that are executed and synthesized.
+- **Enhanced Model Routing**: Refactored the internal model routing endpoint (`/api/models`) to automatically filter out non-chat / embedding models and prioritize local Ollama models based on parameters/size.
+
+
 ## Note
 
 Built-in connectors are a framework: toggling one "connects" it for the worker, but live data from
