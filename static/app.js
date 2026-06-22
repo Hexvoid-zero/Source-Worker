@@ -684,11 +684,11 @@ function switchCoderTab(activeId, panelToShowId) {
     }
   });
   if (panelToShowId === "coderComposerPanel") {
-    $("coderComposerPanel").style.display = "block";
+    $("coderComposerPanel").style.display = "flex";
     $("coderMemoryPanel").style.display = "none";
   } else if (panelToShowId === "coderMemoryPanel") {
     $("coderComposerPanel").style.display = "none";
-    $("coderMemoryPanel").style.display = "block";
+    $("coderMemoryPanel").style.display = "flex";
     loadCoderMemory();
   }
 }
@@ -919,41 +919,92 @@ async function handleCoderFolderSelect(e) {
   e.target.value = "";
 }
 
+// --- Source Work Coder: streaming Claude-Code-style session ---
+let coderHistory = [];      // [{role,content}] conversational memory for follow-ups
+let coderStreaming = false;
+
+function coderEsc(s) { return String(s == null ? "" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+function coderResetSession() {
+  coderHistory = [];
+  if ($("coderChatHistory")) { $("coderChatHistory").innerHTML = ""; $("coderChatHistory").hidden = true; }
+  if ($("coderGreeting")) $("coderGreeting").hidden = false;
+  if ($("coderSuggest")) $("coderSuggest").hidden = false;
+}
+
+function coderRenderEvent(turn, ev) {
+  if (ev.type === "start") {
+    const repo = (ev.repo || "").split(/[\\/]/).filter(Boolean).pop() || ev.repo;
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-start">▸ ${coderEsc(ev.model)} · ${coderEsc(repo)}</div>`);
+  } else if (ev.type === "think") {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-think">${coderEsc(ev.text)}</div>`);
+  } else if (ev.type === "tool") {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-tool"><span class="cx-tool-name">${coderEsc(ev.name)}</span> <span class="cx-tool-arg">${coderEsc(ev.arg || "")}</span></div>`);
+  } else if (ev.type === "tool_result") {
+    const r = coderEsc((ev.result || "").split("\n").slice(0, 16).join("\n"));
+    turn.insertAdjacentHTML("beforeend", `<details class="cx-result"><summary>output</summary><pre>${r}</pre></details>`);
+  } else if (ev.type === "file_edit") {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-edit">${ev.kind === "write" ? "＋ created" : "✎ edited"} <code>${coderEsc(ev.path)}</code></div>`);
+  } else if (ev.type === "final") {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-final">${fmt(ev.text || "")}</div>`);
+  } else if (ev.type === "error") {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-err">${coderEsc(ev.text || "")}</div>`);
+  }
+}
+
 async function coderSubmit() {
+  if (coderStreaming) return;
   const task = $("coderInput").value.trim();
   if (!task) return;
-  const plan_model = $("coderModelSelect").value;
-  
-  if (S.jobId) {
-    try {
-      await api(`/jobs/${S.jobId}/coder/message`, {
-        method: "POST",
-        body: JSON.stringify({ message: task, model: plan_model })
-      });
-      $("coderInput").value = "";
-      coderAttachedFiles = [];
-      renderCoderAttachments();
-      openJob(S.jobId);
-    } catch (e) { toast("Failed to send: " + e.message, 4000); }
-    return;
-  }
-  
+  const model = $("coderModelSelect").value;
+
+  $("coderGreeting").hidden = true;
+  if ($("coderSuggest")) $("coderSuggest").hidden = true;
+  const box = $("coderChatHistory");
+  box.hidden = false;
+  $("coderInput").value = "";
+  coderAttachedFiles = []; renderCoderAttachments();
+
+  box.insertAdjacentHTML("beforeend", `<div class="cx-msg cx-user">${coderEsc(task)}</div>`);
+  const turn = document.createElement("div");
+  turn.className = "cx-turn";
+  box.appendChild(turn);
+  box.scrollTop = box.scrollHeight;
+
+  coderStreaming = true;
+  $("coderSend").disabled = true;
+  let finalText = "";
   try {
-    const { id } = await api("/jobs", { 
-      method: "POST", 
-      body: JSON.stringify({ 
-        goal: task, 
-        plan_model, 
-        is_coder: true, 
-        files: coderAttachedFiles 
-      }) 
+    const res = await fetch("/api/coder/stream", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task, model, history: coderHistory })
     });
-    $("coderInput").value = "";
-    coderAttachedFiles = [];
-    renderCoderAttachments();
-    openJob(id);
-    loadJobs();
-  } catch (e) { toast("Failed to start: " + e.message, 4000); }
+    if (!res.ok || !res.body) throw new Error("HTTP " + res.status);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let ev; try { ev = JSON.parse(line); } catch { continue; }
+        if (ev.type === "final") finalText = ev.text || "";
+        coderRenderEvent(turn, ev);
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  } catch (e) {
+    turn.insertAdjacentHTML("beforeend", `<div class="cx-err">Error: ${coderEsc(e.message || e)}</div>`);
+  } finally {
+    coderHistory.push({ role: "user", content: task });
+    if (finalText) coderHistory.push({ role: "assistant", content: finalText });
+    coderStreaming = false;
+    $("coderSend").disabled = false;
+  }
 }
 
 function coderToggleRepo(show) {
@@ -979,7 +1030,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("run").onclick = run;
   $("btnWorkspace").onclick = openWorkspace;
   $("btnCoder").onclick = openCoder;
-  $("crNew").onclick = () => { S.jobId = null; renderCoderJob(null); switchCoderTab("crNew", "coderComposerPanel"); $("coderInput").value = ""; $("coderInput").focus(); };
+  $("crNew").onclick = () => { S.jobId = null; coderResetSession(); switchCoderTab("crNew", "coderComposerPanel"); $("coderInput").value = ""; $("coderInput").focus(); };
   $("crMemory").onclick = () => { switchCoderTab("crMemory", "coderMemoryPanel"); };
   $("btnClearCoderMemory").onclick = async () => {
     if (confirm("Clear all coder memory?")) {

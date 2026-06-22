@@ -10,8 +10,10 @@ Write-Host "2/2  Packaging exe (onedir = fast startup)…"
 Remove-Item -Recurse -Force build, dist, SourceWorker.spec -ErrorAction SilentlyContinue
 .\.venv-build\Scripts\python.exe -m PyInstaller --noconfirm --onedir --windowed --optimize 2 --name SourceWorker `
   --icon SourceWorker.ico `
+  --exclude-module tkinter --exclude-module _tkinter --exclude-module pymsgbox --exclude-module mouseinfo --exclude-module PIL.ImageTk `
   --add-data "static;static" --collect-submodules uvicorn `
   --collect-all webview --collect-all clr_loader --collect-all pythonnet --hidden-import clr `
+  --hidden-import coder_agent `
   --paths backend backend\launcher.py
 
 Write-Host "Done -> dist\SourceWorker\SourceWorker.exe"

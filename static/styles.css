@@ -972,4 +972,68 @@ textarea, input, select { font-family: inherit; color: inherit; background: none
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ---------------------------------------------------------------- Source Work Coder transcript */
+.coder-chat-history {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 14px;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cx-msg.cx-user {
+  align-self: flex-end;
+  max-width: 85%;
+  background: var(--accent-soft);
+  border: 1px solid rgba(245, 158, 11, .35);
+  color: var(--text-bright);
+  border-radius: 12px 12px 4px 12px;
+  padding: 9px 13px;
+  font-size: 13.5px;
+  white-space: pre-wrap;
+}
+.cx-turn {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-left: 2px solid var(--edge);
+  padding: 2px 0 2px 14px;
+}
+.cx-start { font-size: 11px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; letter-spacing: .3px; }
+.cx-think { font-size: 12.5px; color: var(--muted); font-style: italic; line-height: 1.5; }
+.cx-tool {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px; color: var(--text);
+  background: var(--edge-soft); border: 1px solid var(--edge);
+  border-radius: 7px; padding: 5px 9px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cx-tool-name { color: var(--accent); font-weight: 600; }
+.cx-tool-arg { color: var(--muted); }
+.cx-result { font-size: 12px; }
+.cx-result summary { cursor: pointer; color: var(--muted); font-size: 11.5px; padding: 2px 0; user-select: none; }
+.cx-result summary:hover { color: var(--text); }
+.cx-result pre {
+  margin-top: 5px; background: #0d1117; color: #c9d1d9;
+  border: 1px solid var(--edge); border-radius: 7px;
+  padding: 9px 11px; overflow-x: auto; font-size: 11.5px; line-height: 1.5;
+  font-family: ui-monospace, Consolas, monospace; white-space: pre-wrap;
+}
+.cx-edit {
+  font-size: 12.5px; color: var(--text-bright);
+  background: rgba(245, 158, 11, .12); border: 1px solid rgba(245, 158, 11, .3);
+  border-radius: 7px; padding: 5px 10px;
+}
+.cx-edit code { font-family: ui-monospace, Consolas, monospace; color: var(--accent); font-size: 12px; }
+.cx-final {
+  font-size: 13.5px; color: var(--text); line-height: 1.6;
+  border-top: 1px solid var(--edge-soft); padding-top: 10px; margin-top: 2px;
+}
+.cx-final pre { background: #0d1117; color: #c9d1d9; border-radius: 7px; padding: 10px; overflow-x: auto; font-size: 12px; }
+.cx-final code { font-family: ui-monospace, Consolas, monospace; }
+.cx-err { font-size: 13px; color: var(--red); background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .35); border-radius: 7px; padding: 8px 11px; }
+
 

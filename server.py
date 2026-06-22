@@ -24,8 +24,10 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
+
+import coder_agent
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "")
@@ -958,6 +960,46 @@ def add_coder_message(jid: str, body: CoderMessageIn):
             
     return {"ok": True, "task_id": tid}
 
+
+# --------------------------------------------------------------------------- Source Work Coder (Claude-Code-style)
+class CoderStreamIn(BaseModel):
+    task: str
+    repo: str | None = None
+    model: str | None = None
+    history: list | None = None
+
+
+@app.post("/api/coder/stream")
+def coder_stream(body: CoderStreamIn):
+    """Stream a Claude-Code-style coding session (NDJSON events). Shared by the web view,
+    the terminal CLI, and the VS Code extension."""
+    task = (body.task or "").strip()
+    if not task:
+        raise HTTPException(400, "task required")
+    repo = body.repo or str(get_office_workspace())
+
+    def gen():
+        try:
+            for ev in coder_agent.run_coder(repo, task, body.model, body.history):
+                yield json.dumps(ev) + "\n"
+        except Exception as e:
+            yield json.dumps({"type": "error", "text": str(e)}) + "\n"
+
+    return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+
+@app.get("/api/coder/repos")
+def coder_repos():
+    """List candidate repo folders (immediate subdirs of the workspace) for the repo picker."""
+    base = get_office_workspace()
+    out = [{"name": "Default workspace", "path": str(base)}]
+    try:
+        for c in sorted(base.iterdir(), key=lambda c: c.name.lower()):
+            if c.is_dir() and c.name not in (".git", "node_modules", "__pycache__"):
+                out.append({"name": c.name, "path": str(c)})
+    except Exception:
+        pass
+    return out
 
 
 @app.get("/api/jobs")
